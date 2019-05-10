@@ -14,13 +14,14 @@ import os
 # Configurations
 #################################################################################################
 ROOT_PATH = r"C:\Users\m0pxnn\Documents\TimeTracking"
-HEADING_FIELDS = ["     Date    ", "   Day   ", "    InTime    ", "    OutTime    ", "   Hours   "]
+HEADING_FIELDS = ["     Date    ", "   Day   ", "   InTime   ", "   OutTime   ", "   Hours   "]
 NUM_FIELDS = len(HEADING_FIELDS)
 DATA_START_ROW = 1
 MAX_MONTH_DAYS = 31
 MAX_ROWS = MAX_MONTH_DAYS + 2
 MAX_COLS = NUM_FIELDS
 VERBOSE_OUTPUT = False
+REQUIRED_HOURS = [8, 30] # 8 hrs 30 minutes
 
 # Index of different columns in excel sheet
 DATE_INDEX    = 0
@@ -32,20 +33,76 @@ HOURS_INDEX   = 4
 AVG_INTIME_HEADING  = " Avg InTime "
 AVG_OUTTIME_HEADING = " Avg OutTime "
 AVG_HOURS_HEADING   = " Avg hours "
+REQ_HOURS_HEADING   = " Req hours "
+TOTAL_HOURS_HEADING = " Total hours "
 
-CELL_AVG_INTIME_HEADING  = 'C' + str(MAX_ROWS)
-CELL_AVG_OUTTIME_HEADING = 'D' + str(MAX_ROWS)
-CELL_AVG_HOURS_HEADING   = 'E' + str(MAX_ROWS)
+COL_INTIME = 'C'
+COL_OUTTIME = 'D'
+COL_HOURS = 'E'
+COL_REQ_HOURS = 'F'
+COL_TOTAL_HOURS = 'G'
+COL_DIFF_MSG = 'H'
 
-CELL_AVG_INTIME_DATA  = 'C' + str(MAX_ROWS + 1)
-CELL_AVG_OUTTIME_DATA = 'D' + str(MAX_ROWS + 1)
-CELL_AVG_HOURS_DATA   = 'E' + str(MAX_ROWS + 1)
+CELL_AVG_INTIME_HEADING  = COL_INTIME + str(MAX_ROWS)
+CELL_AVG_OUTTIME_HEADING = COL_OUTTIME + str(MAX_ROWS)
+CELL_AVG_HOURS_HEADING   = COL_HOURS + str(MAX_ROWS)
+CELL_REQ_HOURS_HEADING   = COL_REQ_HOURS + str(MAX_ROWS)
+CELL_TOTAL_HOURS_HEADING = COL_TOTAL_HOURS + str(MAX_ROWS)
+
+
+CELL_AVG_INTIME_DATA  = COL_INTIME + str(MAX_ROWS + 1)
+CELL_AVG_OUTTIME_DATA = COL_OUTTIME + str(MAX_ROWS + 1)
+CELL_AVG_HOURS_DATA   = COL_HOURS + str(MAX_ROWS + 1)
+CELL_REQ_HOURS_DATA   = COL_REQ_HOURS + str(MAX_ROWS + 1)
+CELL_TOTAL_HOURS_DATA = COL_TOTAL_HOURS + str(MAX_ROWS + 1)
+CELL_DIFF_MSG_DATA    = COL_DIFF_MSG + str(MAX_ROWS + 1)
+
 
 
 #################################################################################################
 # Functions
 #################################################################################################
 
+#################################################################################################
+# @name         : WriteMiscValuesToSheet
+# @description  : At the end of the sheet, write down the Average intime, outtime and hours.
+#################################################################################################
+def WriteMiscValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours, requiredHours, totalHours, diffMessage):
+    # Add font to Average row
+    avgRowFont = Font(color='00000000', bold=True)
+       
+    # Write misc. details to sheet
+    sheet.column_dimensions[COL_INTIME].width = len(AVG_INTIME_HEADING)
+    sheet[CELL_AVG_INTIME_HEADING].font = avgRowFont
+    sheet[CELL_AVG_INTIME_HEADING] = AVG_INTIME_HEADING
+    sheet[CELL_AVG_INTIME_DATA] = avg_inTime
+    
+    sheet.column_dimensions[COL_OUTTIME].width = len(AVG_OUTTIME_HEADING)
+    sheet[CELL_AVG_OUTTIME_HEADING].font = avgRowFont
+    sheet[CELL_AVG_OUTTIME_HEADING] = AVG_OUTTIME_HEADING
+    sheet[CELL_AVG_OUTTIME_DATA] = avg_outTime
+    
+    sheet.column_dimensions[COL_HOURS].width = len(AVG_HOURS_HEADING)
+    sheet[CELL_AVG_HOURS_HEADING].font = avgRowFont
+    sheet[CELL_AVG_HOURS_HEADING] = AVG_HOURS_HEADING
+    sheet[CELL_AVG_HOURS_DATA] = avg_hours
+    
+    sheet.column_dimensions[COL_REQ_HOURS].width = len(REQ_HOURS_HEADING)
+    sheet[CELL_REQ_HOURS_HEADING].font = avgRowFont
+    sheet[CELL_REQ_HOURS_HEADING] = REQ_HOURS_HEADING
+    sheet[CELL_REQ_HOURS_DATA] = float('%.2f'%(requiredHours))
+    
+    
+    sheet.column_dimensions[COL_TOTAL_HOURS].width = len(TOTAL_HOURS_HEADING)
+    sheet[CELL_TOTAL_HOURS_HEADING].font = avgRowFont
+    sheet[CELL_TOTAL_HOURS_HEADING] = TOTAL_HOURS_HEADING
+    sheet[CELL_TOTAL_HOURS_DATA] = float('%.2f'%(totalHours))
+    
+       
+    sheet.column_dimensions[COL_DIFF_MSG].width = len(diffMessage)
+    sheet[CELL_DIFF_MSG_DATA] = diffMessage
+    
+    
 #################################################################################################
 # @name         : CreateNewWorkbook
 # @description  : Creates a new excel document corresponding to this month. Adds heading row 
@@ -72,27 +129,7 @@ def CreateNewWorkbook(fileNameWithPath):
     
     # Save the workbook
     book.save(fileNameWithPath)
-    
-#################################################################################################
-# @name         : WriteAvgValuesToSheet
-# @description  : At the end of the sheet, write down the Average intime, outtime and hours.
-#################################################################################################
-def WriteAvgValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours):
-    # Add font to Average row
-    avgRowFont = Font(color='00000000', bold=True)
-       
-    # Write to the cell
-    sheet[CELL_AVG_INTIME_HEADING].font = avgRowFont
-    sheet[CELL_AVG_INTIME_HEADING] = AVG_INTIME_HEADING
-    sheet[CELL_AVG_INTIME_DATA] = avg_inTime
-    
-    sheet[CELL_AVG_OUTTIME_HEADING].font = avgRowFont
-    sheet[CELL_AVG_OUTTIME_HEADING] = AVG_OUTTIME_HEADING
-    sheet[CELL_AVG_OUTTIME_DATA] = avg_outTime
-    
-    sheet[CELL_AVG_HOURS_HEADING].font = avgRowFont
-    sheet[CELL_AVG_HOURS_HEADING] = AVG_HOURS_HEADING
-    sheet[CELL_AVG_HOURS_DATA] = avg_hours
+    book.close()
     
 
 #################################################################################################
@@ -227,11 +264,23 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         avg_inTime_seconds = seconds_inTime_total / totalEntries
         avg_outTime_seconds = seconds_outTime_total / totalEntries
         avg_seconds = seconds_total / totalEntries  
-
+        
+        
         avg_inTime = datetime.timedelta(seconds=avg_inTime_seconds)
         avg_outTime = datetime.timedelta(seconds=avg_outTime_seconds)
         avg_hours = datetime.timedelta(seconds=avg_seconds)
-    
+        
+        requiredSeconds = (totalEntries * REQUIRED_HOURS[0] * 60 * 60) + (totalEntries * REQUIRED_HOURS[1] * 60)
+        requiredHours = requiredSeconds / 60 / 60
+        totalHours    = seconds_total / 60 / 60
+        diffHours     = requiredHours - totalHours
+        diffHours     = datetime.timedelta(hours=diffHours) 
+        
+        if (seconds_total >= requiredSeconds):
+            diffMessage = " (Target Met) "
+        else:
+            diffMessage = " (Missing target) "
+        
     # Display this info on console
     print()
     print("** Today **")
@@ -246,18 +295,20 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         # If multiple records were found, only then we need to calculate avg values
         print()
         print("** This month **")
-        print("Average In Time  : ", avg_inTime);
-        print("Average Out Time : ", avg_outTime);
-        print("Average Hours    : ", avg_hours);   
- 
+        print("Required hours    :  %s hours" % '%.2f'%(requiredHours))
+        print("Total hours       :  %s hours" % '%.2f'%(totalHours))
+        print("Difference        :  {} {}".format(diffHours, diffMessage))
+        print("Average In Time   : ", avg_inTime)
+        print("Average Out Time  : ", avg_outTime)
+        print("Average Hours     : ", avg_hours)  
 
         # Write the average hours, in time & out time values at the end of the sheet
-        WriteAvgValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours)
+        WriteMiscValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours, requiredHours, totalHours, diffMessage)
       
     # Save the excel sheet
     print("\nSaving [%s]\n" % fileNameWithPath)
     book.save(fileNameWithPath)
-
+    book.close()
     
 #################################################################################################
 # Main

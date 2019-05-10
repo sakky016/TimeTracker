@@ -10,14 +10,17 @@ Total entries found:  5
 Date             :  10-May-2019
 Day              :  Fri
 In Time          :  09:23:53
-Out Time         :  15:51:31
-Hours            :  6:27:38
+Out Time         :  17:13:48
+Hours            :  7:49:55
 
 ** This month **
-Average In Time  :  9:32:14.600000
-Average Out Time :  17:43:57.400000
-Average Hours    :  8:11:24.200000
+Required hours    :  42.50 hours
+Total hours       :  42.31 hours
+Difference        :  0:11:21  (Missing target)
+Average In Time   :  9:32:14.600000
+Average Out Time  :  18:00:17
+Average Hours     :  8:27:43.800000
 
 Saving [C:\Users\m0pxnn\Documents\TimeTracking\May-2019.xlsx]
 
-+---------------------------------------------------------------------+--------------------------------------------+
++---------------------------------------------------------------------+

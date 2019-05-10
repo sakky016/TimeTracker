@@ -29,9 +29,9 @@ INTIME_INDEX  = 2
 OUTTIME_INDEX = 3
 HOURS_INDEX   = 4
 
-AVG_INTIME_HEADING  = "Avg InTime"
-AVG_OUTTIME_HEADING = "Avg OutTime"
-AVG_HOURS_HEADING   = "Avg hours"
+AVG_INTIME_HEADING  = " Avg InTime "
+AVG_OUTTIME_HEADING = " Avg OutTime "
+AVG_HOURS_HEADING   = " Avg hours "
 
 CELL_AVG_INTIME_HEADING  = 'C' + str(MAX_ROWS)
 CELL_AVG_OUTTIME_HEADING = 'D' + str(MAX_ROWS)
@@ -199,7 +199,6 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             
             # Update in excel sheet
             print()
-            #print("---------------------------------------")
             print("Updating entry...")          
             row[OUTTIME_INDEX].value = outTime
             row[HOURS_INDEX].value = hours   
@@ -219,7 +218,6 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
     # we need to just update the current record.
     if (not recordFound):
         print ()
-        #print("---------------------------------------")
         print("Adding entry...")          
         newRow = [date, weekDay, inTime, outTime, hours]
         sheet.append(newRow)
@@ -235,7 +233,8 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         avg_hours = datetime.timedelta(seconds=avg_seconds)
     
     # Display this info on console
-    #print("---------------------------------------")
+    print()
+    print("** Today **")
     print("Date             : ", date)
     print("Day              : ", weekDay)
     print("In Time          : ", inTime)
@@ -246,10 +245,11 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
     if (totalEntries > 1):
         # If multiple records were found, only then we need to calculate avg values
         print()
+        print("** This month **")
         print("Average In Time  : ", avg_inTime);
         print("Average Out Time : ", avg_outTime);
         print("Average Hours    : ", avg_hours);   
-        #print("---------------------------------------")    
+ 
 
         # Write the average hours, in time & out time values at the end of the sheet
         WriteAvgValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours)

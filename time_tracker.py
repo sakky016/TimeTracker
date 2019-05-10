@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta
+import datetime as dt
 from openpyxl.styles import Font
 import openpyxl
 from openpyxl import Workbook
@@ -13,12 +14,13 @@ import os
 # Configurations
 #################################################################################################
 ROOT_PATH = r"C:\Users\m0pxnn\Documents\TimeTracking"
-HEADING_FIELDS = ["     Date    ", "   Day   ", "  InTime  ", "  OutTime  ", "   Hours   "]
+HEADING_FIELDS = ["     Date    ", "   Day   ", "    InTime    ", "    OutTime    ", "   Hours   "]
 NUM_FIELDS = len(HEADING_FIELDS)
 DATA_START_ROW = 1
 MAX_MONTH_DAYS = 31
 MAX_ROWS = MAX_MONTH_DAYS + 2
 MAX_COLS = NUM_FIELDS
+VERBOSE_OUTPUT = False
 
 # Index of different columns in excel sheet
 DATE_INDEX    = 0
@@ -27,14 +29,27 @@ INTIME_INDEX  = 2
 OUTTIME_INDEX = 3
 HOURS_INDEX   = 4
 
+AVG_INTIME_HEADING  = "Avg InTime"
+AVG_OUTTIME_HEADING = "Avg OutTime"
+AVG_HOURS_HEADING   = "Avg hours"
+
+CELL_AVG_INTIME_HEADING  = 'C' + str(MAX_ROWS)
+CELL_AVG_OUTTIME_HEADING = 'D' + str(MAX_ROWS)
+CELL_AVG_HOURS_HEADING   = 'E' + str(MAX_ROWS)
+
+CELL_AVG_INTIME_DATA  = 'C' + str(MAX_ROWS + 1)
+CELL_AVG_OUTTIME_DATA = 'D' + str(MAX_ROWS + 1)
+CELL_AVG_HOURS_DATA   = 'E' + str(MAX_ROWS + 1)
+
+
 #################################################################################################
 # Functions
 #################################################################################################
 
 #################################################################################################
 # @name         : CreateNewWorkbook
-# @description  : Creates a new excel document corresponding to this month. Adds heading row and formatting for
-#                 it and saves it.
+# @description  : Creates a new excel document corresponding to this month. Adds heading row 
+#                 and formatting for it and saves it.
 #################################################################################################
 def CreateNewWorkbook(fileNameWithPath):
     book = Workbook()
@@ -58,6 +73,27 @@ def CreateNewWorkbook(fileNameWithPath):
     # Save the workbook
     book.save(fileNameWithPath)
     
+#################################################################################################
+# @name         : WriteAvgValuesToSheet
+# @description  : At the end of the sheet, write down the Average intime, outtime and hours.
+#################################################################################################
+def WriteAvgValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours):
+    # Add font to Average row
+    avgRowFont = Font(color='00000000', bold=True)
+       
+    # Write to the cell
+    sheet[CELL_AVG_INTIME_HEADING].font = avgRowFont
+    sheet[CELL_AVG_INTIME_HEADING] = AVG_INTIME_HEADING
+    sheet[CELL_AVG_INTIME_DATA] = avg_inTime
+    
+    sheet[CELL_AVG_OUTTIME_HEADING].font = avgRowFont
+    sheet[CELL_AVG_OUTTIME_HEADING] = AVG_OUTTIME_HEADING
+    sheet[CELL_AVG_OUTTIME_DATA] = avg_outTime
+    
+    sheet[CELL_AVG_HOURS_HEADING].font = avgRowFont
+    sheet[CELL_AVG_HOURS_HEADING] = AVG_HOURS_HEADING
+    sheet[CELL_AVG_HOURS_DATA] = avg_hours
+    
 
 #################################################################################################
 # @name         : PrepareDataForToday
@@ -77,15 +113,19 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
     outTime = ""
     hours = ""
     
+    totalEntries = 0
     recordFound = False
-    maxRows = sheet.max_row
-    print ("Records present: ", maxRows - 1)
+    rowsFilled = sheet.max_row
     
-    for row in sheet.rows:
+    seconds_inTime_total = None;
+    seconds_outTime_total = None;
+    seconds_total = None;   
     
+    
+    for row in sheet.rows:   
         # Date value in this row of the sheet
         sheet_date = row[DATE_INDEX].value
-        if (sheet_date == "Date"):
+        if (sheet_date == HEADING_FIELDS[DATE_INDEX]):
             # This is the heading row, skip it
             continue
             
@@ -94,14 +134,59 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         
         # InTime value in this row of the sheet. This field should NOT BE 'None', because
         # if this entry is present, it must have an inTime.
+        if (VERBOSE_OUTPUT):
+            print()
+            print (sheet_date)
+            
         sheet_inTime = row[INTIME_INDEX].value
-        
+        if (sheet_inTime != None):            
+            sheet_inTime_dt = datetime.datetime.strptime(sheet_inTime, "%H:%M:%S")
+            tmp = datetime.timedelta(hours=sheet_inTime_dt.hour, 
+                                     minutes=sheet_inTime_dt.minute, 
+                                     seconds=sheet_inTime_dt.second).total_seconds()
+                                     
+            if (seconds_inTime_total == None):
+                seconds_inTime_total = tmp              
+            else:
+                seconds_inTime_total = seconds_inTime_total + tmp 
+            
+            if (VERBOSE_OUTPUT):
+                print ("sheet_inTime  : ", sheet_inTime)
+                print ("  seconds     : ", seconds_inTime_total)
+            
         # OutTime value in this row of the sheet. This field CAN be 'None'.       
         sheet_outTime = row[OUTTIME_INDEX].value
+        if (sheet_outTime != None):            
+            sheet_outTime_dt = datetime.datetime.strptime(sheet_outTime, "%H:%M:%S")
+            tmp = datetime.timedelta(hours=sheet_outTime_dt.hour, 
+                                     minutes=sheet_outTime_dt.minute, 
+                                     seconds=sheet_outTime_dt.second).total_seconds()
+                                     
+            if (seconds_outTime_total == None):
+                seconds_outTime_total = tmp              
+            else:
+                seconds_outTime_total = seconds_outTime_total + tmp    
+            
+            if (VERBOSE_OUTPUT):
+                print ("sheet_outTime : ", sheet_outTime)            
+                print ("  seconds     : ", seconds_outTime_total)
         
         # Hours value in this row of the sheet. This CAN be 'None'
         sheet_hours = row[HOURS_INDEX].value
-        
+        if (sheet_hours != None):
+            tmp = datetime.timedelta(hours=sheet_hours.hour, 
+                                     minutes=sheet_hours.minute, 
+                                     seconds=sheet_hours.second).total_seconds()
+                                     
+            if (seconds_total == None):
+                seconds_total = tmp              
+            else:
+                seconds_total = seconds_total + tmp               
+            
+            if (VERBOSE_OUTPUT):
+                print ("  seconds     : ", seconds_total)
+                print ("sheet_hours   : ", sheet_hours)
+                
         # If this record has the same date as the current date, then we need to update
         # the outTime of this entry and re-calculate the Hours.
         if (date == sheet_date):
@@ -113,25 +198,62 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             hours = datetime.datetime.strptime(outTime, "%H:%M:%S") - datetime.datetime.strptime(inTime, "%H:%M:%S")
             
             # Update in excel sheet
-            print("\nUpdating entry...")          
+            print()
+            #print("---------------------------------------")
+            print("Updating entry...")          
             row[OUTTIME_INDEX].value = outTime
-            row[HOURS_INDEX].value = hours            
+            row[HOURS_INDEX].value = hours   
+
+            # Since we are breaking the loop, update the entry count.
+            totalEntries = totalEntries + 1
             break
 
+
+        # Update the entries present in the sheet
+        totalEntries = totalEntries + 1   
+       
+    
+    print("Total entries found: ", totalEntries)
+    
     # If entry for this date is not present, only then we need to add this entry, else
     # we need to just update the current record.
     if (not recordFound):
-        print("\nAdding entry...")          
+        print ()
+        #print("---------------------------------------")
+        print("Adding entry...")          
         newRow = [date, weekDay, inTime, outTime, hours]
         sheet.append(newRow)
     
-    # Display this info on console
-    print("Date     : ", date)
-    print("Day      : ", weekDay)
-    print("In Time  : ", inTime)
-    print("Out Time : ", outTime)
-    print("Hours    : ", hours)
+    if (totalEntries > 1):
+        # Update average info only if we have 2 or more entries
+        avg_inTime_seconds = seconds_inTime_total / totalEntries
+        avg_outTime_seconds = seconds_outTime_total / totalEntries
+        avg_seconds = seconds_total / totalEntries  
+
+        avg_inTime = datetime.timedelta(seconds=avg_inTime_seconds)
+        avg_outTime = datetime.timedelta(seconds=avg_outTime_seconds)
+        avg_hours = datetime.timedelta(seconds=avg_seconds)
     
+    # Display this info on console
+    #print("---------------------------------------")
+    print("Date             : ", date)
+    print("Day              : ", weekDay)
+    print("In Time          : ", inTime)
+    print("Out Time         : ", outTime)
+    print("Hours            : ", hours)
+    #print("---------------------------------------")
+    
+    if (totalEntries > 1):
+        # If multiple records were found, only then we need to calculate avg values
+        print()
+        print("Average In Time  : ", avg_inTime);
+        print("Average Out Time : ", avg_outTime);
+        print("Average Hours    : ", avg_hours);   
+        #print("---------------------------------------")    
+
+        # Write the average hours, in time & out time values at the end of the sheet
+        WriteAvgValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours)
+      
     # Save the excel sheet
     print("\nSaving [%s]\n" % fileNameWithPath)
     book.save(fileNameWithPath)

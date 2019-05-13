@@ -17,8 +17,8 @@ ROOT_PATH = r"C:\Users\m0pxnn\Documents\TimeTracking"
 HEADING_FIELDS = ["     Date    ", "   Day   ", "   InTime   ", "   OutTime   ", "   Hours   "]
 NUM_FIELDS = len(HEADING_FIELDS)
 DATA_START_ROW = 1
-MAX_MONTH_DAYS = 31
-MAX_ROWS = MAX_MONTH_DAYS + 2
+MAX_MONTH_DAYS = 30
+MAX_ROWS = MAX_MONTH_DAYS + 1
 MAX_COLS = NUM_FIELDS
 VERBOSE_OUTPUT = False
 REQUIRED_HOURS = [8, 30] # 8 hrs 30 minutes
@@ -158,14 +158,20 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
     seconds_outTime_total = None;
     seconds_total = None;   
     
+    rowNumber = 0
     
     for row in sheet.rows:   
+        rowNumber = rowNumber + 1
+        
         # Date value in this row of the sheet
         sheet_date = row[DATE_INDEX].value
         if (sheet_date == HEADING_FIELDS[DATE_INDEX]):
             # This is the heading row, skip it
             continue
-            
+        
+        if (rowNumber >= MAX_ROWS):
+            break
+        
         # Week day in this row of the sheet    
         sheet_weekDay = row[WEEKDAY_INDEX].value
         

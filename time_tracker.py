@@ -265,6 +265,11 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         newRow = [date, weekDay, inTime, outTime, hours]
         sheet.append(newRow)
     
+    # Calculate expected outTime for today (as per the REQUIRED_HOURS parameter)
+    secondsRequiredToday = (REQUIRED_HOURS[0] * 60 * 60) + (REQUIRED_HOURS[1] * 60)
+    expectedOutTimeForToday = datetime.timedelta(seconds=secondsRequiredToday) + datetime.datetime.strptime(inTime, "%H:%M:%S")
+    expectedOutTimeForToday = expectedOutTimeForToday.strftime("%H:%M:%S")    
+    
     if (totalEntries > 1):
         # Update average info only if we have 2 or more entries
         avg_inTime_seconds = seconds_inTime_total / totalEntries
@@ -290,11 +295,12 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
     # Display this info on console
     print()
     print("** Today **")
-    print("Date             : ", date)
-    print("Day              : ", weekDay)
-    print("In Time          : ", inTime)
-    print("Out Time         : ", outTime)
-    print("Hours            : ", hours)
+    print("Date              : ", date)
+    print("Day               : ", weekDay)
+    print("In Time           : ", inTime)
+    print("Required Out Time : ", expectedOutTimeForToday)
+    print("Actual Out Time   : ", outTime)
+    print("Hours             : ", hours)
     #print("---------------------------------------")
     
     if (totalEntries > 1):

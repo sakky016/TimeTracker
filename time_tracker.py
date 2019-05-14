@@ -8,6 +8,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
 from openpyxl.styles import Color, Fill
 from openpyxl.worksheet.dimensions import ColumnDimension
+from openpyxl.utils.cell import column_index_from_string
 import os
 
 #################################################################################################
@@ -36,6 +37,8 @@ AVG_HOURS_HEADING   = " Avg hours "
 REQ_HOURS_HEADING   = " Req hours "
 TOTAL_HOURS_HEADING = " Total hours "
 
+COL_DATE = 'A'
+COL_DAY = 'B'
 COL_INTIME = 'C'
 COL_OUTTIME = 'D'
 COL_HOURS = 'E'
@@ -169,7 +172,7 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             # This is the heading row, skip it
             continue
         
-        if (rowNumber >= MAX_ROWS):
+        if (rowNumber >= MAX_ROWS or sheet_date == None):
             break
         
         # Week day in this row of the sheet    
@@ -263,7 +266,14 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         print ()
         print("Adding entry...")          
         newRow = [date, weekDay, inTime, outTime, hours]
-        sheet.append(newRow)
+        #sheet.append(newRow)
+
+        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_DATE)).value = date
+        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_DAY)).value = weekDay
+        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_INTIME)).value = inTime
+        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_OUTTIME)).value = outTime
+        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_HOURS)).value = hours
+        
     
     # Calculate expected outTime for today (as per the REQUIRED_HOURS parameter)
     secondsRequiredToday = (REQUIRED_HOURS[0] * 60 * 60) + (REQUIRED_HOURS[1] * 60)

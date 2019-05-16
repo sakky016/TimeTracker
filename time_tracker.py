@@ -268,11 +268,11 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         newRow = [date, weekDay, inTime, outTime, hours]
         #sheet.append(newRow)
 
-        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_DATE)).value = date
-        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_DAY)).value = weekDay
-        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_INTIME)).value = inTime
-        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_OUTTIME)).value = outTime
-        sheet.cell(row=totalEntries+1, column=column_index_from_string(COL_HOURS)).value = hours
+        sheet.cell(row=totalEntries+2, column=column_index_from_string(COL_DATE)).value = date
+        sheet.cell(row=totalEntries+2, column=column_index_from_string(COL_DAY)).value = weekDay
+        sheet.cell(row=totalEntries+2, column=column_index_from_string(COL_INTIME)).value = inTime
+        sheet.cell(row=totalEntries+2, column=column_index_from_string(COL_OUTTIME)).value = outTime
+        sheet.cell(row=totalEntries+2, column=column_index_from_string(COL_HOURS)).value = hours
         
     
     # Calculate expected outTime for today (as per the REQUIRED_HOURS parameter)

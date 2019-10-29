@@ -1,3 +1,4 @@
+
 import datetime
 from datetime import timedelta
 import datetime as dt
@@ -10,6 +11,9 @@ from openpyxl.styles import Color, Fill
 from openpyxl.worksheet.dimensions import ColumnDimension
 from openpyxl.utils.cell import column_index_from_string
 import os
+import sys
+
+isVerbose = False
 
 #################################################################################################
 # Configurations
@@ -59,8 +63,6 @@ CELL_AVG_HOURS_DATA   = COL_HOURS + str(MAX_ROWS + 1)
 CELL_REQ_HOURS_DATA   = COL_REQ_HOURS + str(MAX_ROWS + 1)
 CELL_TOTAL_HOURS_DATA = COL_TOTAL_HOURS + str(MAX_ROWS + 1)
 CELL_DIFF_MSG_DATA    = COL_DIFF_MSG + str(MAX_ROWS + 1)
-
-
 
 #################################################################################################
 # Functions
@@ -180,7 +182,7 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         
         # InTime value in this row of the sheet. This field should NOT BE 'None', because
         # if this entry is present, it must have an inTime.
-        if (VERBOSE_OUTPUT):
+        if (VERBOSE_OUTPUT and isVerbose):
             print()
             print (sheet_date)
             
@@ -196,7 +198,7 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             else:
                 seconds_inTime_total = seconds_inTime_total + tmp 
             
-            if (VERBOSE_OUTPUT):
+            if (VERBOSE_OUTPUT and isVerbose):
                 print ("sheet_inTime  : ", sheet_inTime)
                 print ("  seconds     : ", seconds_inTime_total)
             
@@ -213,7 +215,7 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             else:
                 seconds_outTime_total = seconds_outTime_total + tmp    
             
-            if (VERBOSE_OUTPUT):
+            if (VERBOSE_OUTPUT and isVerbose):
                 print ("sheet_outTime : ", sheet_outTime)            
                 print ("  seconds     : ", seconds_outTime_total)
         
@@ -229,7 +231,7 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             else:
                 seconds_total = seconds_total + tmp               
             
-            if (VERBOSE_OUTPUT):
+            if (VERBOSE_OUTPUT and isVerbose):
                 print ("  seconds     : ", seconds_total)
                 print ("sheet_hours   : ", sheet_hours)
                 
@@ -244,8 +246,9 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             hours = datetime.datetime.strptime(outTime, "%H:%M:%S") - datetime.datetime.strptime(inTime, "%H:%M:%S")
             
             # Update in excel sheet
-            print()
-            print("Updating entry...")          
+            if (isVerbose):
+                print()
+                print("Updating entry...")
             row[OUTTIME_INDEX].value = outTime
             row[HOURS_INDEX].value = hours   
 
@@ -257,14 +260,16 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         # Update the entries present in the sheet
         totalEntries = totalEntries + 1   
        
-    
-    print("Total entries found: ", totalEntries)
+
+    if (isVerbose):
+        print("Total entries found: ", totalEntries)
     
     # If entry for this date is not present, only then we need to add this entry, else
     # we need to just update the current record.
     if (not recordFound):
-        print ()
-        print("Adding entry...")          
+        if (isVerbose):
+            print ()
+            print("Adding entry...")
         newRow = [date, weekDay, inTime, outTime, hours]
         #sheet.append(newRow)
 
@@ -292,10 +297,16 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
         avg_hours = datetime.timedelta(seconds=avg_seconds)
         
         requiredSeconds = (totalEntries * REQUIRED_HOURS[0] * 60 * 60) + (totalEntries * REQUIRED_HOURS[1] * 60)
-        requiredHours = requiredSeconds / 60 / 60
-        totalHours    = seconds_total / 60 / 60
-        diffHours     = requiredHours - totalHours
-        diffHours     = datetime.timedelta(hours=diffHours) 
+        requiredHours = float(requiredSeconds) / 60 / 60
+        totalHours    = float(seconds_total) / 60 / 60
+        diffHours     = float(requiredHours - totalHours)
+
+        # Calculate by how much percent we are missing/meeting the target
+        diffPercent = (float(totalHours - requiredHours) / requiredHours) * 100
+        hourCoverage = 100 + diffPercent
+
+        # Convert diff to datetime format
+        diffHours     = datetime.timedelta(hours=diffHours)
         
         if (seconds_total >= requiredSeconds):
             diffMessage = " (Target Met) "
@@ -303,32 +314,37 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
             diffMessage = " (Missing target) "
         
     # Display this info on console
-    print()
-    print("** Today **")
-    print("Date              : ", date)
-    print("Day               : ", weekDay)
-    print("In Time           : ", inTime)
-    print("Required Out Time : ", expectedOutTimeForToday)
-    print("Actual Out Time   : ", outTime)
-    print("Hours             : ", hours)
-    #print("---------------------------------------")
+    if (isVerbose):
+        print()
+        print("** Today **")
+        print("Date              : ", date)
+        print("Day               : ", weekDay)
+        print("In Time           : ", inTime)
+        print("Required Out Time : ", expectedOutTimeForToday)
+        print("Actual Out Time   : ", outTime)
+        print("Hours             : ", hours)
+        #print("---------------------------------------")
     
     if (totalEntries > 1):
         # If multiple records were found, only then we need to calculate avg values
-        print()
-        print("** This month **")
-        print("Required hours    :  %s hours" % '%.2f'%(requiredHours))
-        print("Total hours       :  %s hours" % '%.2f'%(totalHours))
-        print("Difference        :  {} {}".format(diffHours, diffMessage))
-        print("Average In Time   : ", avg_inTime)
-        print("Average Out Time  : ", avg_outTime)
-        print("Average Hours     : ", avg_hours)  
+        if (isVerbose):
+            print()
+            print("** This month **")
+            print("Required hours    :  %s hours" % '%.2f'%(requiredHours))
+            print("Total hours       :  %s hours" % '%.2f'%(totalHours))
+            print("Difference        :  {} ({} %) {}".format(diffHours, round(hourCoverage, 2), diffMessage))
+            print("Average In Time   : ", avg_inTime)
+            print("Average Out Time  : ", avg_outTime)
+            print("Average Hours     : ", avg_hours)
 
         # Write the average hours, in time & out time values at the end of the sheet
         WriteMiscValuesToSheet(sheet, avg_inTime, avg_outTime, avg_hours, requiredHours, totalHours, diffMessage)
       
     # Save the excel sheet
-    print("\nSaving [%s]\n" % fileNameWithPath)
+    if (isVerbose):
+        print("\nSaving [%s]\n" % fileNameWithPath)
+    else:
+        print("\n[DONE]")
     book.save(fileNameWithPath)
     book.close()
     
@@ -336,25 +352,42 @@ def PrepareDataForToday(fileNameWithPath, dateTimeObj):
 # Main
 #################################################################################################
 
-print()
-print("+---------------------------------------------------------------------+")
-print("|                      T I M E     T R A C K E R                      |")
-print("+---------------------------------------------------------------------+")
+def main(argv):
+    global isVerbose
+    args = len(sys.argv)
+    if (args > 1):
+        if (sys.argv[1] == "-v" or sys.argv[1] == "-verbose"):
+            isVerbose = True
 
-# Current date-time. This will determine the entries in the time tracker.
-dateTimeObj = datetime.datetime.now()
 
-# Find filename of Excel that should hold this record
-fileName = dateTimeObj.strftime("%b-%Y")
-fileName = fileName + ".xlsx"
-fileNameWithPath = os.path.join(ROOT_PATH, fileName)
+    if (isVerbose):
+        print()
+        print("+---------------------------------------------------------------------+")
+        print("|                      T I M E     T R A C K E R                      |")
+        print("+---------------------------------------------------------------------+")
 
-# Open and Read excel for this month
-print("Checking [%s]..." % fileNameWithPath)
-if (not os.path.isfile(fileNameWithPath)):
-    print("Creating workbook for this month...")
-    CreateNewWorkbook(fileNameWithPath)
+    # Current date-time. This will determine the entries in the time tracker.
+    dateTimeObj = datetime.datetime.now()
 
-row_data = PrepareDataForToday(fileNameWithPath, dateTimeObj)
+    # Find filename of Excel that should hold this record
+    fileName = dateTimeObj.strftime("%b-%Y")
+    fileName = fileName + ".xlsx"
+    fileNameWithPath = os.path.join(ROOT_PATH, fileName)
 
-print("+---------------------------------------------------------------------+")
+    # Open and Read excel for this month
+    if (isVerbose):
+        print("Checking [%s]..." % fileNameWithPath)
+
+    if (not os.path.isfile(fileNameWithPath)):
+        if (isVerbose):
+            print("Creating workbook for this month...")
+        CreateNewWorkbook(fileNameWithPath)
+
+    row_data = PrepareDataForToday(fileNameWithPath, dateTimeObj)
+
+    if (isVerbose):
+        print("+---------------------------------------------------------------------+")
+
+
+if(__name__== "__main__"):
+    main(sys.argv)
